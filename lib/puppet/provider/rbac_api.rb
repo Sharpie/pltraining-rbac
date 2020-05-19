@@ -5,7 +5,7 @@ class Puppet::Provider::Rbac_api < Puppet::Provider
   require 'openssl'
   require 'yaml'
 
-  CONFIGFILE = "#{Puppet.settings[:confdir]}/classifier.yaml"
+  CONFIGFILE = "/etc/puppetlabs/puppet/classifier.yaml"
 
   confine :exists => CONFIGFILE
 
@@ -23,9 +23,13 @@ class Puppet::Provider::Rbac_api < Puppet::Provider
       https.ssl_version = :TLSv1
     end
      
-    https.ca_file = Puppet.settings[:localcacert]
-    https.key = OpenSSL::PKey::RSA.new(File.read(Puppet.settings[:hostprivkey]))
-    https.cert = OpenSSL::X509::Certificate.new(File.read(Puppet.settings[:hostcert]))
+    https.ca_file = '/etc/puppetlabs/puppet/ssl/certs/ca.pem'
+    pemfile = "#{Puppet.settings[:certname]}.pem"
+
+    https.key = OpenSSL::PKey.read(File.read(File.join('/etc/puppetlabs/puppet/ssl/private_keys',
+                                                       pemfile)))
+    https.cert = OpenSSL::X509::Certificate.new(File.read(File.join('/etc/puppetlabs/puppet/ssl/certs',
+                                                                    pemfile)))
     https.verify_mode = OpenSSL::SSL::VERIFY_PEER
     https
   end
